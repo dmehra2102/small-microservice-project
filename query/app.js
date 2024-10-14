@@ -1,7 +1,8 @@
-const express = require("express");
-const axios = require("axios");
 const cors = require("cors");
+const axios = require("axios");
+const express = require("express");
 const bodyParser = require("body-parser");
+const eventHandler = require("./utils/eventHandler");
 
 const app = express();
 
@@ -12,36 +13,28 @@ app.use(bodyParser.json());
 const posts = {};
 
 app.get("/posts", (req, res) => {
-    return res.status(200).send(posts);
+  console.log("Inside Get /posts");
+  return res.status(200).send(posts);
 });
 
 app.post("/events", (req, res) => {
   const { type, data } = req.body;
 
-  if (type === "PostCreated") {
-    const { id, title } = data;
-    posts[id] = { id, title, comments: [] };
-  }
-
-  if (type === "CommentCreated") {
-    const { id, content, postId, status } = data;
-    const post = posts[postId];
-    post.comments.push({ id, content, status });
-  }
-
-  if( type === "CommentUpdated"){
-    const { id, content, postId, status } = data;
-    const post = posts[postId];
-    const comment = post.comments.find(comment => {
-      return comment.id === id;
-    });
-    comment.status = status;
-    comment.content = content;
-  }
+  eventHandler(type, data, posts);
 
   return res.send({ status: "OK" });
 });
 
-app.listen(4002, () => {
+app.listen(4002, async () => {
   console.log("Listening on 4002");
+  try {
+    const result = await axios.get("http://localhost:4005/events");
+
+    for (let event of result.data) {
+      console.log("Processing event :", event.type);
+      eventHandler(event.type, event.data, posts);
+    }
+  } catch (error) {
+    console.error("Error :", error);
+  }
 });
