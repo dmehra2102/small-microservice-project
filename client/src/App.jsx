@@ -5,7 +5,7 @@ import PostList from './components/PostList'
 const App = () => {
   return (
     <div className='container'>
-      <h1>Create Post</h1>
+      <h1>Create Post!!!</h1>
       <CreatePost />
       
       <hr />
